@@ -1,0 +1,22 @@
+{
+  "name": "telegram_bot_exchange_rates",
+  "version": "1.0.0",
+  "description": "Telegram bot to get exchange rates and weather forecast",
+  "main": "forecastTgBot.js",
+  "engines": {
+    "node": "20.x"
+  },
+  "scripts": {
+    "start": "node ratesTgBot.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Oleksii Kysel'ov",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "axios": "^1.5.1",
+    "dotenv": "^17.2.2",
+    "node-cache": "^5.1.2",
+    "node-telegram-bot-api": "^0.63.0"
+  }
+}
