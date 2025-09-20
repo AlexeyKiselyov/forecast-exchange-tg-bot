@@ -62,8 +62,11 @@ export const getRate = async currency => {
   }
 };
 
-// Compare two currencies (USD vs EUR)
+// Compare two currencies (USD vs EUR) with basic caching to mitigate 429
 export const compareRates = async () => {
+  const cacheKey = 'compare_USD_EUR';
+  const cached = myCache.get(cacheKey);
+  if (cached) return cached;
   try {
     const rateData = await axios(MONO_API_URL);
 
@@ -91,7 +94,7 @@ export const compareRates = async () => {
     const usdToEur = (usdRate.rateSell / eurRate.rateBuy).toFixed(4);
     const eurToUsd = (eurRate.rateSell / usdRate.rateBuy).toFixed(4);
 
-    return `${createHeader('ПОРІВНЯННЯ ВАЛЮТ', '💱')}
+    const message = `${createHeader('ПОРІВНЯННЯ ВАЛЮТ', '💱')}
 
 💵 *USD/UAH*
 ▫️ Покупка: *${usdRate.rateBuy} ₴*
@@ -108,7 +111,14 @@ export const compareRates = async () => {
 📅 *Оновлено:* ${formatTime(usdRate.date)}
 
 ℹ️ _Дані з MonoBank API_`;
+    myCache.set(cacheKey, message, 60); // cache for 60 seconds
+    return message;
   } catch (error) {
+    // On API throttling, try returning cached value if present
+    if (error.response?.status === 429) {
+      const cached = myCache.get('compare_USD_EUR');
+      if (cached) return `${cached}\n\n⚠️ *Дані з кешу* (обмеження API)`;
+    }
     console.log(error.message);
     return createErrorMessage(error.message, 'currency');
   }

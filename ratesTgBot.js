@@ -66,7 +66,13 @@ async function updateMessage(chatId, messageId, text, options) {
     });
     loadingStates.delete(chatId);
   } catch (error) {
-    // Если не удалось отредактировать, отправляем новое сообщение
+    const desc = error?.response?.body?.description || error?.message || '';
+    // Игнорируем безвредную ошибку Telegram "message is not modified"
+    if (typeof desc === 'string' && desc.includes('message is not modified')) {
+      loadingStates.delete(chatId);
+      return;
+    }
+    // Если не удалось отредактировать по другой причине — отправляем новое сообщение
     await bot.sendMessage(chatId, text, { parse_mode: 'Markdown', ...options });
     loadingStates.delete(chatId);
   }
@@ -197,7 +203,7 @@ ${EMOJI.ui.info} Виберіть опцію в меню або використ
       });
     }
 
-    if (text === '/Курс валют �') {
+    if (text === '/Курс валют 💹') {
       const currencyMessage = `${createHeader(
         'МЕНЮ ВАЛЮТ',
         EMOJI.currency.exchange
@@ -519,7 +525,12 @@ ${EMOJI.ui.info} Дані оновлюються автоматично
         });
     }
   } catch (error) {
-    console.log(`Callback error: ${error.message}`);
+    const desc = error?.response?.body?.description || error?.message || '';
+    console.log(`Callback error: ${desc}`);
+    // Harmless: trying to edit with the same content/markup – ignore silently
+    if (typeof desc === 'string' && desc.includes('message is not modified')) {
+      return;
+    }
     await bot.answerCallbackQuery(callbackQuery.id, {
       text: '❌ Виникла помилка',
       show_alert: true,
